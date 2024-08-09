@@ -2,22 +2,24 @@ package router
 
 import (
 	"net/http"
-	"time"
+	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nalawade41/secret-server/config"
+	"github.com/nalawade41/secret-server/internal/wire"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Handler struct {
-	ContextTimeout time.Duration
-	Config         *config.Config
+	config    *config.Config
+	dbConnect *dynamodb.Client
 	// TODO: add any additional required values
 }
 
 func NewHandler(cfg *config.Config) *Handler {
-	return &Handler{Config: cfg}
+	return &Handler{config: cfg}
 }
 
 func (h *Handler) Init() *echo.Echo {
@@ -25,7 +27,9 @@ func (h *Handler) Init() *echo.Echo {
 	e := echo.New()
 	e.Use(
 		middleware.Recover(),
-		middleware.Logger(),
+		middleware.LoggerWithConfig(middleware.LoggerConfig{
+			Output: os.Stdout,
+		}),
 		middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(200)),
 		middleware.CORS(),
 	)
@@ -34,7 +38,7 @@ func (h *Handler) Init() *echo.Echo {
 	e.GET("/", HealthCheck)
 
 	// Show swagger docs if APP_ENV is not production
-	if h.Config.Environment != config.Prod {
+	if h.config.Environment != config.Prod {
 		e.GET("/swagger/*", echoSwagger.WrapHandler)
 	}
 
@@ -45,7 +49,11 @@ func (h *Handler) Init() *echo.Echo {
 }
 
 func (h *Handler) initAPI(e *echo.Echo) {
-	// TODO: add API routes
+	secretManager := wire.InitializeRouteProvider(h.dbConnect)
+	api := e.Group("/api/v1")
+	{
+		secretManager.InitRoutes(api)
+	}
 }
 
 // HealthCheck godoc
