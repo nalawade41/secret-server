@@ -21,3 +21,8 @@ run-production:
 .PHONY: run-development
 run-development:
 	@make run APP_ENV=development
+
+
+.PHONY: run-wire
+run-wire:
+	cd internal/wire && go run -mod=mod github.com/google/wire/cmd/wire

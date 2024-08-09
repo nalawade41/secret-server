@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/nalawade41/secret-server/router"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/nalawade41/secret-server/config"
 	"github.com/nalawade41/secret-server/internal/util/logger"
+	"github.com/nalawade41/secret-server/router"
 	"github.com/nalawade41/secret-server/server"
 )
 
