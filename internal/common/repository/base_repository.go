@@ -1,11 +1,11 @@
 package repository
 
 import (
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/nalawade41/secret-server/db"
 )
 
 type BaseRepository struct {
-	DBConnection *dynamodb.Client
+	DBConnection db.DynamoDBAPI
 }
 
 // If we need, we can add the common methods here like transaction handlers and other common methods

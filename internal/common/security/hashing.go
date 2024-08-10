@@ -7,7 +7,7 @@ import (
 )
 
 // GenerateSHA256Hash generates a SHA-256 hash from the given inputs
-func GenerateSHA256Hash(inputs ...string) string {
+func (e RealEncryptor) GenerateSHA256Hash(inputs ...string) string {
 	// Concatenate all input strings
 	concatenatedInputs := strings.Join(inputs, "")
 

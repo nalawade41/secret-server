@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/nalawade41/secret-server/db"
 	"net/http"
 	"os"
@@ -30,9 +29,9 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host		localhost:8080
-//	@BasePath	/
-//	@schemes	http
+// @host		localhost:8080
+// @BasePath	/
+// @schemes	http
 func main() {
 	var err error
 
@@ -44,7 +43,7 @@ func main() {
 	}
 
 	// Initialize the dynamo client
-	var dbConnect *dynamodb.Client
+	var dbConnect db.DynamoDBAPI
 	if dbConnect, err = db.InitDynamoDB(cfg); err != nil {
 		logger.Error(err)
 		return

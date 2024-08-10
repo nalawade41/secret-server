@@ -6,24 +6,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nalawade41/secret-server/internal/common/security"
 	"github.com/nalawade41/secret-server/internal/domain"
 )
 
 type SecretManagerUseCase struct {
 	SecretRepo domain.SecretRepository
+	Encryptor  domain.Encryptor
 }
 
 // CreateSecretMessage creates a secret message and stores it in the repository
 func (s SecretManagerUseCase) CreateSecretMessage(ctx context.Context, message domain.Secret) (domain.Secret, error) {
 	// Generate a unique hash for the secret
-	hash := security.GenerateSHA256Hash(message.SecretText, message.CreatedAt.String())
+	hash := s.Encryptor.GenerateSHA256Hash(message.SecretText, message.CreatedAt.String())
 
 	// Set the hash in the secret
 	message.Hash = hash
 
 	// Encrypt the message
-	encryptedText, err := security.EncryptMessage(message.SecretText, hash)
+	encryptedText, err := s.Encryptor.EncryptMessage(message.SecretText, hash)
 	if err != nil {
 		return domain.Secret{}, fmt.Errorf("failed to encrypt secret: %w", err)
 	}

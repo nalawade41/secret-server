@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nalawade41/secret-server/config"
+	"github.com/nalawade41/secret-server/db"
 	_ "github.com/nalawade41/secret-server/docs"
 	"github.com/nalawade41/secret-server/internal/wire"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -15,10 +15,10 @@ import (
 
 type Handler struct {
 	config    *config.Config
-	dbConnect *dynamodb.Client
+	dbConnect db.DynamoDBAPI
 }
 
-func NewHandler(cfg *config.Config, db *dynamodb.Client) *Handler {
+func NewHandler(cfg *config.Config, db db.DynamoDBAPI) *Handler {
 	return &Handler{config: cfg, dbConnect: db}
 }
 

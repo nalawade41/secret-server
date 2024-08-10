@@ -26,3 +26,9 @@ type SecretUseCase interface {
 	CreateSecretMessage(ctx context.Context, message Secret) (Secret, error)
 	GetSecretMessage(ctx context.Context, hash string) (Secret, error)
 }
+
+// Encryptor is an interface to abstract the encryption function
+type Encryptor interface {
+	EncryptMessage(plaintext string, hash string) (string, error)
+	GenerateSHA256Hash(inputs ...string) string
+}

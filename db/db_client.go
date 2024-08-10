@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	dynamoDBClient *dynamodb.Client
+	dynamoDBClient DynamoDBAPI
 	dynamoDBOnce   = new(sync.Once)
 )
 
 // InitDynamoDB initializes the DynamoDB connection
-func InitDynamoDB(cfg *lConfig.Config) (*dynamodb.Client, error) {
+func InitDynamoDB(cfg *lConfig.Config) (DynamoDBAPI, error) {
 	var initErr error
 
 	dynamoDBOnce.Do(func() {
@@ -81,7 +81,7 @@ func InitDynamoDB(cfg *lConfig.Config) (*dynamodb.Client, error) {
 				fmt.Printf("Table %s created successfully\n", cfg.Database.TableName)
 			}
 		} else {
-			logger.Info("Table %s already exists\n", cfg.Database.TableName)
+			logger.Infof("Table %s already exists", cfg.Database.TableName)
 		}
 	})
 
@@ -89,7 +89,7 @@ func InitDynamoDB(cfg *lConfig.Config) (*dynamodb.Client, error) {
 }
 
 // doesTableExist checks if a DynamoDB table exists
-func doesTableExist(ctx context.Context, svc *dynamodb.Client, tableName string) (bool, error) {
+func doesTableExist(ctx context.Context, svc DynamoDBAPI, tableName string) (bool, error) {
 	// Use DescribeTable to check if the table exists
 	_, err := svc.DescribeTable(ctx, &dynamodb.DescribeTableInput{
 		TableName: aws.String(tableName),
@@ -108,7 +108,7 @@ func doesTableExist(ctx context.Context, svc *dynamodb.Client, tableName string)
 }
 
 // createTable creates a new DynamoDB table
-func createTable(ctx context.Context, svc *dynamodb.Client, tableName string) error {
+func createTable(ctx context.Context, svc DynamoDBAPI, tableName string) error {
 	_, err := svc.CreateTable(ctx, &dynamodb.CreateTableInput{
 		TableName: aws.String(tableName),
 		AttributeDefinitions: []types.AttributeDefinition{
@@ -137,7 +137,7 @@ func createTable(ctx context.Context, svc *dynamodb.Client, tableName string) er
 }
 
 // waitForTableToBeActive waits for a DynamoDB table to become active
-func waitForTableToBeActive(ctx context.Context, svc *dynamodb.Client, tableName string) error {
+func waitForTableToBeActive(ctx context.Context, svc DynamoDBAPI, tableName string) error {
 	waitTime := 5 * time.Second
 	maxRetries := 12 // Retry for up to 1 minute
 

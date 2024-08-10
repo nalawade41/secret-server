@@ -1,9 +1,10 @@
 package secret
 
 import (
+	"github.com/nalawade41/secret-server/db"
+	"github.com/nalawade41/secret-server/internal/common/security"
 	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/wire"
 	"github.com/nalawade41/secret-server/internal/common/repository"
 	"github.com/nalawade41/secret-server/internal/domain"
@@ -22,20 +23,33 @@ var (
 	repo     *dynamo.SecretManagerRepository
 	repoOnce sync.Once
 
+	encryptor   *security.RealEncryptor
+	encryptOnce sync.Once
+
 	ManagerProviderSet wire.ProviderSet = wire.NewSet(
 		NewSecretManagerHandler,
 		NewSecretManagerUseCase,
 		NewSecretManagerRepository,
+		NewEncryptor,
 
 		wire.Bind(new(domain.SecretUseCase), new(*usecase.SecretManagerUseCase)),
 		wire.Bind(new(domain.SecretRepository), new(*dynamo.SecretManagerRepository)),
+		wire.Bind(new(domain.Encryptor), new(*security.RealEncryptor)),
 	)
 )
 
-func NewSecretManagerUseCase(repo domain.SecretRepository) *usecase.SecretManagerUseCase {
+func NewEncryptor() *security.RealEncryptor {
+	encryptOnce.Do(func() {
+		encryptor = &security.RealEncryptor{}
+	})
+	return encryptor
+}
+
+func NewSecretManagerUseCase(repo domain.SecretRepository, encryptor domain.Encryptor) *usecase.SecretManagerUseCase {
 	ucOnce.Do(func() {
 		secretUseCase = &usecase.SecretManagerUseCase{
 			SecretRepo: repo,
+			Encryptor:  encryptor,
 		}
 	})
 	return secretUseCase
@@ -51,7 +65,7 @@ func NewSecretManagerHandler(rs domain.SecretUseCase) *handler.SecretManagerHand
 }
 
 // NewSecretManagerRepository creates new secret repository
-func NewSecretManagerRepository(db *dynamodb.Client, tableName string) *dynamo.SecretManagerRepository {
+func NewSecretManagerRepository(db db.DynamoDBAPI, tableName string) *dynamo.SecretManagerRepository {
 	repoOnce.Do(func() {
 		repo = &dynamo.SecretManagerRepository{
 			BaseRepository: repository.BaseRepository{

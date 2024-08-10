@@ -30,3 +30,14 @@ run-wire:
 .PHONY: run-swagger
 run-swagger:
 	swag init -g cmd/local/main.go
+
+
+# Define a target to generate mocks
+.PHONY: mockgen
+mockgen:
+	@echo "Generating mocks..."
+	@mockgen -source=internal/common/repository/base_repository.go -destination=mocks/base_repository_mock.go -package=mocks
+	@mockgen -source=db/db_api.go -destination=mocks/dynamodbapi_mock.go -package=mocks
+	@mockgen -destination=mocks/secret_repository_mock.go -package=mocks github.com/nalawade41/secret-server/internal/domain SecretRepository
+	@mockgen -destination=mocks/encryptor_mock.go -package=mocks github.com/nalawade41/secret-server/internal/domain Encryptor
+	@mockgen -destination=mocks/mock_secret_usecase.go -package=mocks github.com/nalawade41/secret-server/internal/domain SecretUseCase

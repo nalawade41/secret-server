@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	echoadapter "github.com/awslabs/aws-lambda-go-api-proxy/echo"
 	"github.com/nalawade41/secret-server/config"
 	"github.com/nalawade41/secret-server/db"
@@ -28,7 +27,7 @@ func init() {
 	}
 
 	// Initialize the dynamo client
-	var dbConnect *dynamodb.Client
+	var dbConnect db.DynamoDBAPI
 	if dbConnect, err = db.InitDynamoDB(cfg); err != nil {
 		logger.Error(err)
 		return

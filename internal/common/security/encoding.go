@@ -5,19 +5,28 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"io"
 )
 
+type RealEncryptor struct{}
+
 // deriveKeyFromHash derives a secret key from the hash
-func deriveKeyFromHash(hash string) []byte {
+func deriveKeyFromHash(hash string) ([]byte, error) {
+	if len(hash) < 32 {
+		return nil, errors.New("hash must be at least 32 characters long")
+	}
 	// Use the first 32 characters of the hash as the key
 	key, _ := hex.DecodeString(hash[:32])
-	return key
+	return key, nil
 }
 
 // EncryptMessage encrypts the plaintext message using AES encryption
-func EncryptMessage(plaintext string, hash string) (string, error) {
-	key := deriveKeyFromHash(hash)
+func (e RealEncryptor) EncryptMessage(plaintext string, hash string) (string, error) {
+	key, err := deriveKeyFromHash(hash)
+	if err != nil {
+		return "", err
+	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
