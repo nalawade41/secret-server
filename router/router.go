@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/nalawade41/secret-server/config"
+	_ "github.com/nalawade41/secret-server/docs"
 	"github.com/nalawade41/secret-server/internal/wire"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -15,11 +16,10 @@ import (
 type Handler struct {
 	config    *config.Config
 	dbConnect *dynamodb.Client
-	// TODO: add any additional required values
 }
 
-func NewHandler(cfg *config.Config) *Handler {
-	return &Handler{config: cfg}
+func NewHandler(cfg *config.Config, db *dynamodb.Client) *Handler {
+	return &Handler{config: cfg, dbConnect: db}
 }
 
 func (h *Handler) Init() *echo.Echo {
@@ -49,7 +49,7 @@ func (h *Handler) Init() *echo.Echo {
 }
 
 func (h *Handler) initAPI(e *echo.Echo) {
-	secretManager := wire.InitializeRouteProvider(h.dbConnect)
+	secretManager := wire.InitializeRouteProvider(h.dbConnect, h.config.Database.TableName)
 	api := e.Group("/api/v1")
 	{
 		secretManager.InitRoutes(api)

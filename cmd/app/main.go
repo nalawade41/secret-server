@@ -6,9 +6,12 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	echoadapter "github.com/awslabs/aws-lambda-go-api-proxy/echo"
 	"github.com/nalawade41/secret-server/config"
-	"github.com/nalawade41/secret-server/internal/util/logger"
+	"github.com/nalawade41/secret-server/db"
+	_ "github.com/nalawade41/secret-server/docs"
+	"github.com/nalawade41/secret-server/internal/common/logger"
 	"github.com/nalawade41/secret-server/router"
 	"github.com/nalawade41/secret-server/trace"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda"
@@ -23,24 +26,32 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Initialize the dynamo client
+	var dbConnect *dynamodb.Client
+	if dbConnect, err = db.InitDynamoDB(cfg); err != nil {
+		logger.Error(err)
+		return
+	}
+
 	// Initialize the server with the configuration object and the router handler
-	echoLambda = echoadapter.New(router.NewHandler(cfg).Init())
+	echoLambda = echoadapter.New(router.NewHandler(cfg, dbConnect).Init())
 }
 
-//	@title			Echo Swagger vai API
-//	@version		1.0
-//	@description	This is a vai API swagger.
-//	@termsOfService	http://swagger.io/terms/
+// @title My API
+// @version 1.0
+// @description This is a sample server for a secret API.
+// @termsOfService http://swagger.io/terms/
 
-//	@contact.name	API Support
-//	@contact.url	http://www.swagger.io/support
-//	@contact.email	support@swagger.io
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
 
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host		localhost:3000
-// @BasePath	/
+// @host localhost:8080
+// @BasePath /
 // @schemes	http
 func main() {
 	ctx, tp, err := trace.SetTracing()
@@ -56,10 +67,11 @@ func main() {
 	}(ctx)
 
 	fmt.Println("Starting Lambda")
-	lambda.Start(otellambda.InstrumentHandler(handler, xrayconfig.WithRecommendedOptions(tp)...))
+	lambda.Start(otellambda.InstrumentHandler(Handler, xrayconfig.WithRecommendedOptions(tp)...))
+	fmt.Println("Lambda started")
 }
 
-func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Create handlers for routing
 	// Create Echo Router with routes
 	// Wrap the Echo router using the Echo Lambda adapter

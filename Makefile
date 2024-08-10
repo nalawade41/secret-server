@@ -15,14 +15,18 @@ run:
 # Target to run the application in production mode
 .PHONY: run-production
 run-production:
-	@make run APP_ENV=production
+	@make run APP_ENV=prod
 
-# Target to run the application in development mode
-.PHONY: run-development
+# Target to run the application in local mode
+.PHONY: run-local
 run-development:
-	@make run APP_ENV=development
+	@make run APP_ENV=local
 
 
 .PHONY: run-wire
 run-wire:
 	cd internal/wire && go run -mod=mod github.com/google/wire/cmd/wire
+
+.PHONY: run-swagger
+run-swagger:
+	swag init -g cmd/local/main.go
