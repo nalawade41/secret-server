@@ -62,7 +62,7 @@ jobs:
           GOFLAGS=-mod=mod go generate ./...
           go mod tidy -e
           go mod download
-          make generate
+          make run-wire
           cd ${{ inputs.GO_APP_PATH }}
           make build
 
