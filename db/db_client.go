@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	lConfig "github.com/nalawade41/secret-server/config"
 	"github.com/nalawade41/secret-server/internal/common/logger"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -30,8 +30,7 @@ func InitDynamoDB(cfg *lConfig.Config) (DynamoDBAPI, error) {
 			config.WithRegion(cfg.AWS.Region),
 		)
 		if err != nil {
-			logger.Errorf("failed to load AWS config: %v", err)
-			initErr = err
+			initErr = errors.Wrap(err, fmt.Sprintf("failed to load AWS config: %v", err))
 			return
 		}
 
@@ -53,8 +52,7 @@ func InitDynamoDB(cfg *lConfig.Config) (DynamoDBAPI, error) {
 				}),
 			)
 			if err != nil {
-				logger.Errorf("failed to load AWS config: %v", err)
-				initErr = err
+				initErr = errors.Wrap(err, fmt.Sprintf("failed to load AWS config: %v", err))
 				return
 			}
 		}
@@ -65,8 +63,7 @@ func InitDynamoDB(cfg *lConfig.Config) (DynamoDBAPI, error) {
 		// Check if the table exists
 		exists, err := doesTableExist(context.TODO(), dynamoDBClient, cfg.Database.TableName)
 		if err != nil {
-			logger.Errorf("failed to check table existence: %v", err)
-			initErr = err
+			initErr = errors.Wrap(err, fmt.Sprintf("failed to check table existence: %v", err))
 			return
 		}
 
@@ -74,11 +71,10 @@ func InitDynamoDB(cfg *lConfig.Config) (DynamoDBAPI, error) {
 		if !exists {
 			err = createTable(context.TODO(), dynamoDBClient, cfg.Database.TableName)
 			if err != nil {
-				logger.Errorf("failed to create table: %v", err)
-				initErr = err
+				initErr = errors.Wrap(err, fmt.Sprintf("failed to create table: %v", err))
 				return
 			} else {
-				fmt.Printf("Table %s created successfully\n", cfg.Database.TableName)
+				logger.Infof("Table %s created successfully\n", cfg.Database.TableName)
 			}
 		} else {
 			logger.Infof("Table %s already exists", cfg.Database.TableName)
@@ -101,7 +97,7 @@ func doesTableExist(ctx context.Context, svc DynamoDBAPI, tableName string) (boo
 		if ok := errors.As(err, &notFoundErr); ok {
 			return false, nil // Table does not exist
 		}
-		return false, fmt.Errorf("failed to describe table: %w", err)
+		return false, errors.Wrap(err, fmt.Sprintf("failed to describe table: %w", err))
 	}
 
 	return true, nil // Table exists
@@ -129,7 +125,7 @@ func createTable(ctx context.Context, svc DynamoDBAPI, tableName string) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create table: %w", err)
+		return errors.Wrap(err, fmt.Sprintf("failed to create table %s: %v", tableName, err))
 	}
 
 	// Wait for the table to become active
@@ -146,16 +142,17 @@ func waitForTableToBeActive(ctx context.Context, svc DynamoDBAPI, tableName stri
 			TableName: aws.String(tableName),
 		})
 		if err != nil {
-			return fmt.Errorf("failed to describe table: %w", err)
+			return errors.Wrap(err, fmt.Sprintf("failed to describe table: %v", err))
 		}
 
 		if desc.Table.TableStatus == types.TableStatusActive {
 			return nil
 		}
 
-		fmt.Printf("Waiting for table %s to become active...\n", tableName)
+		logger.Infof("Waiting for table %s to become active...\n", tableName)
+
 		time.Sleep(waitTime)
 	}
 
-	return fmt.Errorf("table %s did not become active in time", tableName)
+	return errors.New(fmt.Sprintf("table %s did not become active in time", tableName))
 }

@@ -2,7 +2,6 @@ package dynamo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/nalawade41/secret-server/internal/common/repository"
 	"github.com/nalawade41/secret-server/internal/domain"
+	"github.com/pkg/errors"
 )
 
 type SecretManagerRepository struct {
@@ -26,7 +26,7 @@ func (s SecretManagerRepository) DeleteSecret(ctx context.Context, hash string) 
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to delete secret: %w", err)
+		return errors.Wrap(err, fmt.Sprintf("failed to delete secret for hash: %s", hash))
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func (s SecretManagerRepository) UpdateSecretViews(ctx context.Context, hash str
 		ConditionExpression: aws.String("remainingViews > :zero"),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to update remaining views: %w", err)
+		return errors.Wrap(err, fmt.Sprintf("failed to update remaining views for hash: %s", hash))
 	}
 
 	return nil
@@ -56,7 +56,7 @@ func (s SecretManagerRepository) Save(ctx context.Context, secret domain.Secret)
 	// Marshal the secret into a map of DynamoDB attribute values
 	item, err := attributevalue.MarshalMap(secret)
 	if err != nil {
-		return fmt.Errorf("failed to marshal secret: %w", err)
+		return errors.Wrap(err, fmt.Sprintf("failed to marshal secret: %w", err))
 	}
 
 	// Put the item into the DynamoDB table
@@ -65,7 +65,7 @@ func (s SecretManagerRepository) Save(ctx context.Context, secret domain.Secret)
 		Item:      item,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to put item: %w", err)
+		return errors.Wrap(err, fmt.Sprintf("failed to put item: %w", err))
 	}
 
 	return nil
@@ -79,7 +79,7 @@ func (s SecretManagerRepository) GetByHash(ctx context.Context, hash string) (do
 		},
 	})
 	if err != nil {
-		return domain.Secret{}, fmt.Errorf("failed to retrieve item: %w", err)
+		return domain.Secret{}, errors.Wrap(err, fmt.Sprintf("failed to get item for hash: %s", hash))
 	}
 
 	if result.Item == nil {
@@ -89,7 +89,7 @@ func (s SecretManagerRepository) GetByHash(ctx context.Context, hash string) (do
 	// Unmarshal the result into a domain.Secret struct
 	var secret domain.Secret
 	if err := attributevalue.UnmarshalMap(result.Item, &secret); err != nil {
-		return domain.Secret{}, fmt.Errorf("failed to unmarshal item: %w", err)
+		return domain.Secret{}, errors.Wrap(err, fmt.Sprintf("failed to unmarshal item: %w", err))
 	}
 
 	return secret, nil

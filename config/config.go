@@ -1,12 +1,13 @@
 package config
 
 import (
-	"github.com/nalawade41/secret-server/internal/common/logger"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -43,8 +44,7 @@ func Init() (*Config, error) {
 		envFilePath := ProjectRootPath + "/.env." + env
 		if _, err := os.Stat(envFilePath); err == nil {
 			if err := godotenv.Load(envFilePath); err != nil {
-				logger.Errorf("Error loading enviornment %s file", envFilePath)
-				return nil, err
+				return nil, errors.Wrap(err, fmt.Sprintf("Error loading enviornment %s file", envFilePath))
 			}
 		}
 	}

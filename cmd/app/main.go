@@ -20,10 +20,12 @@ import (
 var echoLambda *echoadapter.EchoLambda
 
 func init() {
-	fmt.Println("Initiating Lambda")
+	logger.Info("Initializing the Lambda function")
+
 	cfg, err := config.Init()
 	if err != nil {
-		panic(err)
+		logger.Error(err)
+		return
 	}
 
 	// Initialize the dynamo client
@@ -55,19 +57,20 @@ func init() {
 func main() {
 	ctx, tp, err := trace.SetTracing()
 	if err != nil {
-		panic(err)
+		logger.Errorf("error setting up tracing: %v", err)
+		return
 	}
 
 	defer func(ctx context.Context) {
 		err := tp.Shutdown(ctx)
 		if err != nil {
-			fmt.Printf("error shutting down tracer provider: %v", err)
+			logger.Infof("error shutting down tracer provider: %v", err)
 		}
 	}(ctx)
 
-	fmt.Println("Starting Lambda")
 	lambda.Start(otellambda.InstrumentHandler(Handler, xrayconfig.WithRecommendedOptions(tp)...))
-	fmt.Println("Lambda started")
+
+	logger.Info("Lambda started")
 }
 
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -77,8 +80,7 @@ func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	// Forward the Lambda request to the Echo router
 	response, err := echoLambda.ProxyWithContext(ctx, req)
 	if err != nil {
-		logMessage := fmt.Sprintf("Error while processing the Lambda request: %v", err.Error())
-		logger.Errorf(logMessage)
+		logger.Errorf(fmt.Sprintf("Error while processing the Lambda request: %v", err.Error()))
 		return events.APIGatewayProxyResponse{}, err
 	}
 	return response, nil
