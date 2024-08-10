@@ -14,8 +14,8 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeRouteProvider(dbConnection *dynamodb.Client) *handler.SecretManagerHandler {
-	secretManagerRepository := secret.NewSecretManagerRepository(dbConnection)
+func InitializeRouteProvider(dbConnection *dynamodb.Client, tableName string) *handler.SecretManagerHandler {
+	secretManagerRepository := secret.NewSecretManagerRepository(dbConnection, tableName)
 	secretManagerUseCase := secret.NewSecretManagerUseCase(secretManagerRepository)
 	secretManagerHandler := secret.NewSecretManagerHandler(secretManagerUseCase)
 	return secretManagerHandler

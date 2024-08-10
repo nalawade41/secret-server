@@ -51,12 +51,13 @@ func NewSecretManagerHandler(rs domain.SecretUseCase) *handler.SecretManagerHand
 }
 
 // NewSecretManagerRepository creates new secret repository
-func NewSecretManagerRepository(db *dynamodb.Client) *dynamo.SecretManagerRepository {
+func NewSecretManagerRepository(db *dynamodb.Client, tableName string) *dynamo.SecretManagerRepository {
 	repoOnce.Do(func() {
 		repo = &dynamo.SecretManagerRepository{
 			BaseRepository: repository.BaseRepository{
 				DBConnection: db,
 			},
+			TableName: tableName,
 		}
 	})
 	return repo

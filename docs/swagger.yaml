@@ -1,0 +1,125 @@
+basePath: /
+definitions:
+  requests.CreateSecretRequest:
+    properties:
+      expireAfter:
+        type: integer
+      expireAfterViews:
+        type: integer
+      secret:
+        type: string
+    type: object
+  response.SecretResponse:
+    properties:
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      hash:
+        type: string
+      remainingViews:
+        type: integer
+      secretText:
+        type: string
+    type: object
+  responses.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server for a secret API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: My API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - '*/*'
+      description: get the status of server.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show the status of server.
+      tags:
+      - Server Health
+  /api/v1/secret:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Add a new secret with expiration controls
+      operationId: addSecret
+      parameters:
+      - description: Create Secret Message
+        in: body
+        name: secret
+        required: true
+        schema:
+          $ref: '#/definitions/requests.CreateSecretRequest'
+      produces:
+      - application/json
+      - ' application/xml'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/response.SecretResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "405":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Add a new secret
+      tags:
+      - secret
+  /api/v1/secret/{hash}:
+    get:
+      description: Returns a single secret
+      operationId: getSecretByHash
+      parameters:
+      - description: Unique hash to identify the secret
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      - ' application/xml'
+      responses:
+        "200":
+          description: successful operation
+          schema:
+            $ref: '#/definitions/response.SecretResponse'
+        "400":
+          description: Bad request, hash missing
+          schema:
+            $ref: '#/definitions/responses.Error'
+        "404":
+          description: Secret not found
+          schema:
+            $ref: '#/definitions/responses.Error'
+      summary: Find a secret by hash
+      tags:
+      - Secret
+schemes:
+- http
+swagger: "2.0"

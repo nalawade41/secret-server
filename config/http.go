@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/nalawade41/secret-server/internal/util/logger"
+	"github.com/nalawade41/secret-server/internal/common/logger"
 	"os"
 	"strconv"
 	"time"

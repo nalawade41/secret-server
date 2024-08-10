@@ -9,6 +9,6 @@ import (
 	"github.com/nalawade41/secret-server/internal/secret/handler"
 )
 
-func InitializeRouteProvider(dbConnection *dynamodb.Client) *handler.SecretManagerHandler {
+func InitializeRouteProvider(dbConnection *dynamodb.Client, tableName string) *handler.SecretManagerHandler {
 	panic(wire.Build(secret.ManagerProviderSet))
 }
