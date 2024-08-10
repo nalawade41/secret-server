@@ -1,0 +1,74 @@
+name: 🧩 Golang Lambda Deployment
+
+on:
+  workflow_call:
+    inputs:
+      ENV:
+        type: string
+        required: true
+      GO_APP_PATH:
+        type: string
+        required: true
+      DEPLOY_PATH:
+        type: string
+        required: true
+      BRANCH:
+        type: string
+        required: true
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      CDK_DEFAULT_REGION:
+        required: true
+      CDK_DEFAULT_ACCOUNT:
+        required: true
+
+env:
+  ENV: ${{ inputs.ENV }}
+  CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+  CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+  AWS_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  NODE_VERSION: "18"
+  GOLANG_VERSION: "1.21.6"
+  BRANCH: ${{ inputs.BRANCH }}
+
+jobs:
+  deploy-api:
+    name: Golang Lambda Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BRANCH }}
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+        id: go
+
+      - name: Building Go Lambda
+        run: |
+          GOFLAGS=-mod=mod go generate ./...
+          go mod tidy -e
+          go mod download
+          make generate
+          cd ${{ inputs.GO_APP_PATH }}
+          make build
+
+      - name: Deploying
+        run: |
+          cd ${{ inputs.DEPLOY_PATH }}
+          yarn install
+          npx aws-cdk synth
+          npx aws-cdk deploy --require-approval never
